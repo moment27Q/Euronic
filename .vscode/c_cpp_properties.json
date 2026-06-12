@@ -1,0 +1,33 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Win32",
+      "intelliSenseMode": "windows-msvc-x64",
+      "includePath": [
+        "${workspaceFolder}/euronic/windows",
+        "${workspaceFolder}/euronic/windows/runner",
+        "${workspaceFolder}/euronic/windows/flutter/ephemeral",
+        "${workspaceFolder}/euronic/windows/flutter/ephemeral/cpp_client_wrapper/include",
+        "${workspaceFolder}/euronic/build/windows/x64/extracted/flutter_windows/include",
+        "${workspaceFolder}/euronic/build/windows/x64/extracted/flutter_windows/include/flutter"
+      ],
+      "browse": {
+        "path": [
+          "${workspaceFolder}/euronic/windows",
+          "${workspaceFolder}/euronic/windows/flutter/ephemeral",
+          "${workspaceFolder}/euronic/build/windows/x64/extracted/flutter_windows/include"
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "defines": [
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE",
+        "NOMINMAX"
+      ],
+      "cppStandard": "c++17",
+      "cStandard": "c17"
+    }
+  ]
+}
