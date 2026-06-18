@@ -3,5 +3,6 @@
   "C_Cpp.errorSquiggles": "disabled",
   "C_Cpp.intelliSenseEngineFallback": "disabled",
   "C_Cpp.autocomplete": "disabled",
-  "C_Cpp.enhancedColorization": "disabled"
+  "C_Cpp.enhancedColorization": "disabled",
+  "cmake.sourceDirectory": "C:/Users/matia/OneDrive/Escritorio/Euronic/euronic/linux"
 }

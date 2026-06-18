@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'services/auth_service.dart';
+import 'services/api_config.dart';
 
 void main() {
   runApp(const EuronicApp());
@@ -915,8 +918,11 @@ class _TranslatorPageState extends State<TranslatorPage>
                           _LangPill(label: _targetLang),
                           const Spacer(),
                           // Configuración
-                          const Icon(Icons.settings_outlined,
-                              size: 26, color: Colors.black87),
+                          GestureDetector(
+                            onTap: () => _showTranslatorSettings(context),
+                            child: const Icon(Icons.settings_outlined,
+                                size: 26, color: Colors.black87),
+                          ),
                         ],
                       ),
                     ),
@@ -1195,8 +1201,11 @@ class _OfflineTranslatorPageState extends State<OfflineTranslatorPage>
                                 size: 26, color: Colors.black87),
                           ),
                           const Spacer(),
-                          const Icon(Icons.settings_outlined,
-                              size: 26, color: Colors.black87),
+                          GestureDetector(
+                            onTap: () => _showAudioSettings(context),
+                            child: const Icon(Icons.settings_outlined,
+                                size: 26, color: Colors.black87),
+                          ),
                         ],
                       ),
                     ),
@@ -1463,124 +1472,140 @@ class _HomeDashboardPageState extends State<HomeDashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kPageBg,
-      body: Column(
-        children: [
-          // ── Hero + tarjeta superpuesta ────────────────
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              _HeroBanner(onComprar: () => _showComingSoon('Comprar')),
-              Positioned(
-                bottom: -32,
-                left: 16,
-                right: 16,
-                child: _UserGreetingCard(userName: widget.userName),
-              ),
-            ],
-          ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Hero + tarjeta superpuesta ────────────────
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _HeroBanner(onComprar: () => _showComingSoon('Comprar')),
+                Positioned(
+                  bottom: -32,
+                  left: 16,
+                  right: 16,
+                  child: _UserGreetingCard(userName: widget.userName),
+                ),
+              ],
+            ),
 
-          // ── Contenido scrollable ─────────────────────
-          Expanded(
-            child: SingleChildScrollView(
+            // Espacio para la tarjeta superpuesta
+            const SizedBox(height: 48),
+
+            const SizedBox(height: 20),
+
+            // Sección IA
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Espacio para la tarjeta superpuesta
-                  const SizedBox(height: 48),
-
-                  const SizedBox(height: 20),
-
-                  // Sección IA
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                '¿En que Te puedo ayudar?',
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1A1A1A),
-                                ),
-                              ),
-                            ),
-                            _RobotIcon(),
-                          ],
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '¿En que Te puedo ayudar?',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A1A1A),
+                          ),
                         ),
-                        const SizedBox(height: 14),
-                        _AIInputField(
-                            onTap: () =>
-                                _showComingSoon('Conversación IA')),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Sección traducción
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(18, 0, 18, 14),
-                    child: Text(
-                      'Traducción',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
                       ),
-                    ),
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                              builder: (_) => const AIChatPage()),
+                        ),
+                        child: _RobotIcon(),
+                      ),
+                    ],
                   ),
-
-                  _FeatureCard(
-                    icon: Icons.translate_rounded,
-                    label: 'Modo Traductor',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                          builder: (_) => const TranslatorPage()),
-                    ),
-                  ),
-                  _FeatureCard(
-                    icon: Icons.wifi_off_rounded,
-                    label: 'Traducción sin conexión',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                          builder: (_) => const OfflineTranslatorPage()),
-                    ),
-                  ),
-                  _FeatureCard(
-                    icon: Icons.record_voice_over_rounded,
-                    label: 'Traductor en Vivo',
-                    onTap: () => _showComingSoon('Traductor en Vivo'),
-                  ),
-                  _FeatureCard(
-                    icon: Icons.video_camera_front_rounded,
-                    label: 'Traducción de Video llamada',
-                    onTap: () =>
-                        _showComingSoon('Traducción de Video llamada'),
-                  ),
-                  _FeatureCard(
-                    icon: Icons.mic_rounded,
-                    label: 'Traductor de Audios',
-                    onTap: () =>
-                        _showComingSoon('Traductor de Audios'),
-                  ),
-
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
+                  _AIInputField(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                            builder: (_) => const AIChatPage()),
+                      )),
                 ],
               ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 24),
+
+            // Sección traducción
+            const Padding(
+              padding: EdgeInsets.fromLTRB(18, 0, 18, 14),
+              child: Text(
+                'Traducción',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+            ),
+
+            _FeatureCard(
+              icon: Icons.translate_rounded,
+              label: 'Modo Traductor',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const TranslatorPage()),
+              ),
+            ),
+            _FeatureCard(
+              icon: Icons.wifi_off_rounded,
+              label: 'Traducción sin conexión',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const OfflineTranslatorPage()),
+              ),
+            ),
+            _FeatureCard(
+              icon: Icons.record_voice_over_rounded,
+              label: 'Traductor en Vivo',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const LiveTranslationPage()),
+              ),
+            ),
+            _FeatureCard(
+              icon: Icons.video_camera_front_rounded,
+              label: 'Traducción de Video llamada',
+              onTap: () => _showComingSoon('Traducción de Video llamada'),
+            ),
+            _FeatureCard(
+              icon: Icons.mic_rounded,
+              label: 'Traductor de Audios',
+              onTap: () => _showComingSoon('Traductor de Audios'),
+            ),
+
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
 
       // ── Bottom Nav ───────────────────────────────
       bottomNavigationBar: _DashBottomNav(
         currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+        onTap: (i) {
+          if (i == 1) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const AIChatPage()),
+            );
+            return;
+          }
+          if (i == 2) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const FindEarbudsPage()),
+            );
+            return;
+          }
+          setState(() => _currentIndex = i);
+        },
       ),
     );
   }
@@ -2022,6 +2047,1861 @@ class _NavItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// PANTALLA – Chat IA
+// ─────────────────────────────────────────────
+
+class _ChatMessage {
+  const _ChatMessage({required this.text, required this.isUser});
+  final String text;
+  final bool isUser;
+}
+
+class AIChatPage extends StatefulWidget {
+  const AIChatPage({super.key});
+
+  @override
+  State<AIChatPage> createState() => _AIChatPageState();
+}
+
+class _AIChatPageState extends State<AIChatPage> {
+  final List<_ChatMessage> _messages = [];
+  final _textController = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _isKeyboardMode = false;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendMessage(String text) async {
+    if (text.trim().isEmpty) return;
+    final userMsg = text.trim();
+    _textController.clear();
+
+    setState(() {
+      _messages.add(_ChatMessage(text: userMsg, isUser: true));
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final history = _messages
+          .where((m) => !_isLoading || m != _messages.last)
+          .map((m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text})
+          .toList();
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/ai/chat');
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'message': userMsg, 'history': history}),
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode == 200) {
+        setState(() {
+          _messages.add(_ChatMessage(text: body['reply'] as String, isUser: false));
+        });
+      } else {
+        setState(() {
+          _messages.add(_ChatMessage(
+              text: body['message'] as String? ?? 'Error desconocido',
+              isUser: false));
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _messages.add(const _ChatMessage(
+            text: 'No se pudo conectar con el servidor', isUser: false));
+      });
+    } finally {
+      setState(() => _isLoading = false);
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Top bar ──────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(Icons.arrow_back, size: 26, color: Colors.black87),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEEEEE),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'Inglés',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Mensajes ─────────────────────────────
+            Expanded(
+              child: _messages.isEmpty
+                  ? _EmptyAIState()
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: _messages.length + (_isLoading ? 1 : 0),
+                      itemBuilder: (context, i) {
+                        if (_isLoading && i == _messages.length) {
+                          return const _TypingIndicator();
+                        }
+                        final msg = _messages[i];
+                        return _MessageBubble(message: msg);
+                      },
+                    ),
+            ),
+
+            // ── Input ─────────────────────────────────
+            Container(
+              color: const Color(0xFFF5F5F7),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: _isKeyboardMode
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _textController,
+                            autofocus: true,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: _sendMessage,
+                            decoration: InputDecoration(
+                              hintText: 'Escribe tu pregunta...',
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () => _sendMessage(_textController.text),
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF00C6D4), Color(0xFF0077B6)],
+                              ),
+                            ),
+                            child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () => setState(() => _isKeyboardMode = false),
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(color: const Color(0xFFDDDDDD)),
+                            ),
+                            child: const Icon(Icons.mic_rounded, color: Colors.black54, size: 22),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _isKeyboardMode = true),
+                            child: Container(
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(15),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.mic_rounded, size: 20, color: Colors.black54),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Haz clic para hablar',
+                                    style: TextStyle(fontSize: 15, color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () => setState(() => _isKeyboardMode = true),
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(color: const Color(0xFFDDDDDD)),
+                            ),
+                            child: const Icon(Icons.keyboard_rounded, color: Colors.black54, size: 22),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyAIState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Robot ilustración
+        SizedBox(
+          width: 120,
+          height: 130,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Cuerpo del robot (chat bubble)
+              Positioned(
+                bottom: 0,
+                child: Container(
+                  width: 100,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF00C6D4), Color(0xFF0077B6)],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _RobotEye(),
+                          SizedBox(width: 14),
+                          _RobotEye(),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Antena
+              Positioned(
+                top: 0,
+                child: Container(
+                  width: 6,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A3A6B),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF1A3A6B),
+                  ),
+                ),
+              ),
+              // Triángulo inferior del chat bubble
+              Positioned(
+                bottom: 0,
+                left: 28,
+                child: CustomPaint(
+                  size: const Size(18, 12),
+                  painter: _BubbleTailPainter(),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Tarjeta de bienvenida
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(12),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Column(
+            children: [
+              Text(
+                'Hola~ Soy tu asistente de IA',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Si tienes dudas, pregúntame cuando quieras~',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RobotEye extends StatelessWidget {
+  const _RobotEye();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(230),
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+}
+
+class _BubbleTailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF0077B6)
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
+}
+
+class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({required this.message});
+  final _ChatMessage message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment:
+            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!message.isUser) ...[
+            Container(
+              width: 32,
+              height: 32,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Color(0xFF00C6D4), Color(0xFF0077B6)],
+                ),
+              ),
+              child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 18),
+            ),
+          ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: message.isUser ? const Color(0xFF0077B6) : const Color(0xFFF2F2F2),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(message.isUser ? 18 : 4),
+                  bottomRight: Radius.circular(message.isUser ? 4 : 18),
+                ),
+              ),
+              child: Text(
+                message.text,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: message.isUser ? Colors.white : Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TypingIndicator extends StatelessWidget {
+  const _TypingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFF00C6D4), Color(0xFF0077B6)],
+              ),
+            ),
+            child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 18),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF2F2F2),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const SizedBox(
+              width: 36,
+              height: 10,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _Dot(delay: 0),
+                  _Dot(delay: 150),
+                  _Dot(delay: 300),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Dot extends StatefulWidget {
+  const _Dot({required this.delay});
+  final int delay;
+
+  @override
+  State<_Dot> createState() => _DotState();
+}
+
+class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _anim = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) _ctrl.repeat(reverse: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _anim,
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black45),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Configuración de Traducción (Bottom Sheet)
+// ─────────────────────────────────────────────
+
+enum _TranslatorMode { silencio, auriculares, altavoz, auricularesDuales }
+
+void _showTranslatorSettings(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _TranslatorSettingsSheet(),
+  );
+}
+
+class _TranslatorSettingsSheet extends StatefulWidget {
+  const _TranslatorSettingsSheet();
+
+  @override
+  State<_TranslatorSettingsSheet> createState() => _TranslatorSettingsSheetState();
+}
+
+class _TranslatorSettingsSheetState extends State<_TranslatorSettingsSheet> {
+  _TranslatorMode _selected = _TranslatorMode.auricularesDuales;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Título + cerrar
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Configuración de traducción',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: const Icon(Icons.close, size: 24, color: Colors.black54),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          _SettingsOption(
+            mode: _TranslatorMode.silencio,
+            selected: _selected,
+            title: 'Modo silencio',
+            description: 'Solo muestra el resultado de la traducción sin sonido.',
+            illustration: const _IllustrationSilencio(),
+            onTap: (m) => setState(() => _selected = m),
+          ),
+          const SizedBox(height: 12),
+          _SettingsOption(
+            mode: _TranslatorMode.auriculares,
+            selected: _selected,
+            title: 'Modo auriculares',
+            description: 'Hable con su teléfono y escuche la traducción en sus auriculares',
+            illustration: const _IllustrationAuriculares(),
+            onTap: (m) => setState(() => _selected = m),
+          ),
+          const SizedBox(height: 12),
+          _SettingsOption(
+            mode: _TranslatorMode.altavoz,
+            selected: _selected,
+            title: 'Modo altavoz',
+            description: 'Toque para comenzar a hablar, y cuando deje de hablar, el sonido traducido se reproducirá desde el teléfono',
+            illustration: const _IllustrationAltavoz(),
+            onTap: (m) => setState(() => _selected = m),
+          ),
+          const SizedBox(height: 12),
+          _SettingsOption(
+            mode: _TranslatorMode.auricularesDuales,
+            selected: _selected,
+            title: 'Modo auriculares dobles',
+            description: 'Una persona usa un auricular, habla al teléfono y escucha la traducción a través del auricular',
+            illustration: const _IllustrationDuales(),
+            onTap: (m) => setState(() => _selected = m),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsOption extends StatelessWidget {
+  const _SettingsOption({
+    required this.mode,
+    required this.selected,
+    required this.title,
+    required this.description,
+    required this.illustration,
+    required this.onTap,
+  });
+
+  final _TranslatorMode mode;
+  final _TranslatorMode selected;
+  final String title;
+  final String description;
+  final Widget illustration;
+  final ValueChanged<_TranslatorMode> onTap;
+
+  bool get _isSelected => mode == selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onTap(mode),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: _isSelected
+              ? Border.all(color: const Color(0xFFE8603A), width: 2)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(10),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            if (_isSelected)
+              Container(
+                width: 26,
+                height: 26,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFE8603A),
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 16),
+              )
+            else
+              const SizedBox(width: 36),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            illustration,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Ilustraciones ──────────────────────────────────────
+
+class _TextLines extends StatelessWidget {
+  const _TextLines();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(width: 36, height: 5, decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(3))),
+        const SizedBox(height: 4),
+        Container(width: 28, height: 5, decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(3))),
+        const SizedBox(height: 4),
+        Container(width: 20, height: 5, decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(3))),
+        const SizedBox(height: 6),
+        Container(
+          width: 20, height: 20,
+          decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE8A090)),
+          child: const Icon(Icons.mic, size: 12, color: Colors.white),
+        ),
+      ],
+    );
+  }
+}
+
+class _IllustrationSilencio extends StatelessWidget {
+  const _IllustrationSilencio();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        _TextLines(),
+        SizedBox(width: 6),
+        Icon(Icons.volume_off_rounded, size: 28, color: Color(0xFF1A1A2E)),
+      ],
+    );
+  }
+}
+
+class _IllustrationAuriculares extends StatelessWidget {
+  const _IllustrationAuriculares();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        _TextLines(),
+        SizedBox(width: 6),
+        Icon(Icons.headphones_rounded, size: 28, color: Color(0xFF1A1A2E)),
+      ],
+    );
+  }
+}
+
+class _IllustrationAltavoz extends StatelessWidget {
+  const _IllustrationAltavoz();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        _TextLines(),
+        SizedBox(width: 6),
+        Icon(Icons.volume_up_rounded, size: 28, color: Color(0xFF1A1A2E)),
+      ],
+    );
+  }
+}
+
+class _IllustrationDuales extends StatelessWidget {
+  const _IllustrationDuales();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        Icon(Icons.headset_mic_rounded, size: 22, color: Color(0xFFE8603A)),
+        SizedBox(width: 4),
+        _TextLines(),
+        SizedBox(width: 4),
+        Icon(Icons.headset_mic_rounded, size: 22, color: Color(0xFFE8603A)),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Configuración de Audio (Offline Translator)
+// ─────────────────────────────────────────────
+
+void _showAudioSettings(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _AudioSettingsSheet(),
+  );
+}
+
+class _AudioSettingsSheet extends StatefulWidget {
+  const _AudioSettingsSheet();
+
+  @override
+  State<_AudioSettingsSheet> createState() => _AudioSettingsSheetState();
+}
+
+class _AudioSettingsSheetState extends State<_AudioSettingsSheet> {
+  bool _reduccionRuido = true;
+  bool _cancelacionEco = true;
+  bool _controlGanancia = true;
+  bool _deteccionIdioma = true;
+  final String _entradaBluetooth = 'Entrada Bluetooth';
+  final String _velocidad = '1.0x';
+  final String _tamanoFuente = 'Normal';
+  final String _idiomas = 'TODOS';
+
+  static const _purple = Color(0xFF6A3DE8);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.black12,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Título
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Text(
+              'Configuración de audio',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          // Contenido scrollable
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+
+                  // ── ENTRADA DE AUDIO ──────────────────
+                  _SectionHeader(label: 'CONFIGURACIÓN DE ENTRADA DE AUDIO'),
+                  _SettingRow(
+                    title: 'Fuente de entrada de interpretación simultánea',
+                    value: _entradaBluetooth,
+                    titleBold: true,
+                    onTap: () {},
+                  ),
+                  const Divider(height: 32, color: Color(0xFFEEEEEE)),
+
+                  // ── CALIDAD DE AUDIO ──────────────────
+                  _SectionHeader(label: 'CONFIGURACIÓN DE CALIDAD DE AUDIO'),
+                  const SizedBox(height: 8),
+                  _ToggleRow(
+                    title: 'Reducción de Ruido',
+                    subtitle: 'Al activarse, se reducirá el ruido ambiental para mejorar la claridad de voz',
+                    value: _reduccionRuido,
+                    color: _purple,
+                    onChanged: (v) => setState(() => _reduccionRuido = v),
+                  ),
+                  const SizedBox(height: 16),
+                  _ToggleRow(
+                    title: 'Cancelación de eco',
+                    value: _cancelacionEco,
+                    color: _purple,
+                    onChanged: (v) => setState(() => _cancelacionEco = v),
+                  ),
+                  const SizedBox(height: 16),
+                  _ToggleRow(
+                    title: 'Control automático de ganancia',
+                    value: _controlGanancia,
+                    color: _purple,
+                    onChanged: (v) => setState(() => _controlGanancia = v),
+                  ),
+                  const Divider(height: 32, color: Color(0xFFEEEEEE)),
+
+                  // ── RECONOCIMIENTO DE VOZ ─────────────
+                  _SectionHeader(label: 'CONFIGURACIÓN DE RECONOCIMIENTO DE VOZ'),
+                  const SizedBox(height: 8),
+                  _SettingRow(title: 'Imagen en imagen', onTap: () {}),
+                  const SizedBox(height: 16),
+                  _SettingRow(
+                    title: 'Velocidad de reproducción',
+                    value: _velocidad,
+                    onTap: () {},
+                  ),
+                  const Divider(height: 32, color: Color(0xFFEEEEEE)),
+
+                  // ── FUENTE ────────────────────────────
+                  _SectionHeader(label: 'CONFIGURACIÓN DE FUENTE'),
+                  const SizedBox(height: 8),
+                  _SettingRow(
+                    title: 'Tamaño de fuente',
+                    value: _tamanoFuente,
+                    onTap: () {},
+                  ),
+                  const Divider(height: 32, color: Color(0xFFEEEEEE)),
+
+                  // ── IDIOMA ────────────────────────────
+                  _SectionHeader(label: 'CONFIGURACIÓN DE IDIOMA'),
+                  const SizedBox(height: 8),
+                  _ToggleRow(
+                    title: 'Detección de idioma',
+                    value: _deteccionIdioma,
+                    color: _purple,
+                    onChanged: (v) => setState(() => _deteccionIdioma = v),
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingRow(
+                    title: 'Descargar idiomas',
+                    value: _idiomas,
+                    valueUppercase: true,
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: Colors.black45,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class _SettingRow extends StatelessWidget {
+  const _SettingRow({
+    required this.title,
+    this.value,
+    this.titleBold = false,
+    this.valueUppercase = false,
+    required this.onTap,
+  });
+
+  final String title;
+  final String? value;
+  final bool titleBold;
+  final bool valueUppercase;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: titleBold ? FontWeight.w700 : FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          if (value != null)
+            Text(
+              valueUppercase ? value!.toUpperCase() : value!,
+              style: TextStyle(
+                fontSize: 14,
+                color: valueUppercase ? const Color(0xFF6A3DE8) : Colors.black45,
+                fontWeight: valueUppercase ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.title,
+    this.subtitle,
+    required this.value,
+    required this.color,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final Color color;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  style: const TextStyle(fontSize: 12, color: Colors.black45, height: 1.4),
+                ),
+              ],
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: Colors.white,
+          activeTrackColor: color,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: Colors.black12,
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// PANTALLA – Traducción en Vivo
+// ─────────────────────────────────────────────
+
+const _kLanguages = [
+  'Español (Perú)',
+  'Español (España)',
+  'Español (México)',
+  'Inglés',
+  'Italiano',
+  'Francés',
+  'Portugués',
+  'Alemán',
+  'Chino',
+  'Japonés',
+  'Coreano',
+  'Árabe',
+  'Ruso',
+];
+
+class LiveTranslationPage extends StatefulWidget {
+  const LiveTranslationPage({super.key});
+
+  @override
+  State<LiveTranslationPage> createState() => _LiveTranslationPageState();
+}
+
+class _LiveTranslationPageState extends State<LiveTranslationPage> {
+  String _leftLang = 'Español (Perú)';
+  String _rightLang = 'Italiano';
+
+  Future<void> _pickLanguage({required bool isLeft}) async {
+    final current = isLeft ? _leftLang : _rightLang;
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _LanguagePickerSheet(selected: current),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        if (isLeft) {
+          _leftLang = result;
+        } else {
+          _rightLang = result;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 0.6, 1.0],
+            colors: [Color(0xFFCBCAF8), Color(0xFFDFDEFF), Colors.white],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Top bar ──────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.arrow_back, size: 26, color: Colors.black87),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => _showTranslatorSettings(context),
+                      child: const Icon(Icons.settings_outlined, size: 26, color: Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Título ───────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5A623),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.translate_rounded, color: Colors.white, size: 34),
+                    ),
+                    const SizedBox(width: 14),
+                    const Text(
+                      'Traducción\nen vivo',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Escucha y conversa con facilidad con personas que hablan otros idiomas.',
+                  style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
+                ),
+              ),
+
+              // ── Auriculares + idiomas ─────────────────
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _EarbudColumn(
+                        side: 'L',
+                        language: _leftLang,
+                        onPickLang: () => _pickLanguage(isLeft: true),
+                      ),
+                      _EarbudColumn(
+                        side: 'R',
+                        language: _rightLang,
+                        onPickLang: () => _pickLanguage(isLeft: false),
+                        mirrored: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Botón ─────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                child: SizedBox(
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Iniciando traducción en vivo...'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0E0E0E),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32)),
+                    ),
+                    child: const Text(
+                      'Iniciar Traducción',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EarbudColumn extends StatelessWidget {
+  const _EarbudColumn({
+    required this.side,
+    required this.language,
+    required this.onPickLang,
+    this.mirrored = false,
+  });
+
+  final String side;
+  final String language;
+  final VoidCallback onPickLang;
+  final bool mirrored;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _EarbudWidget(side: side, mirrored: mirrored),
+        const SizedBox(height: 20),
+        GestureDetector(
+          onTap: onPickLang,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                language,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.unfold_more_rounded, size: 18, color: Colors.black54),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EarbudWidget extends StatelessWidget {
+  const _EarbudWidget({required this.side, this.mirrored = false});
+
+  final String side;
+  final bool mirrored;
+
+  @override
+  Widget build(BuildContext context) {
+    final widget = SizedBox(
+      width: 130,
+      height: 160,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Stem
+          Positioned(
+            bottom: 20,
+            left: mirrored ? null : 38,
+            right: mirrored ? 38 : null,
+            child: Transform.rotate(
+              angle: mirrored ? 0.3 : -0.3,
+              child: Container(
+                width: 38,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF8BAAF8),
+                      const Color(0xFFB8C8FF).withAlpha(180),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          // Pod principal
+          Positioned(
+            top: 8,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  center: Alignment(-0.3, -0.3),
+                  radius: 0.9,
+                  colors: [
+                    Color(0xFFB8CCFF),
+                    Color(0xFF7A9BF5),
+                    Color(0xFF5577E8),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF5577E8).withAlpha(80),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Reflejo en el pod
+          Positioned(
+            top: 20,
+            left: mirrored ? null : 28,
+            right: mirrored ? 28 : null,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(60),
+              ),
+            ),
+          ),
+          // Badge L / R
+          Positioned(
+            bottom: 24,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFF2ECC71),
+              ),
+              child: Center(
+                child: Text(
+                  side,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return mirrored ? Transform.flip(flipX: true, child: widget) : widget;
+  }
+}
+
+class _LanguagePickerSheet extends StatelessWidget {
+  const _LanguagePickerSheet({required this.selected});
+  final String selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 10),
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.black12,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Text(
+            'Seleccionar idioma',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+        ),
+        const Divider(height: 1),
+        Flexible(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _kLanguages.length,
+            itemBuilder: (context, i) {
+              final lang = _kLanguages[i];
+              final isSelected = lang == selected;
+              return ListTile(
+                title: Text(
+                  lang,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: isSelected ? const Color(0xFF5B3FD4) : Colors.black87,
+                  ),
+                ),
+                trailing: isSelected
+                    ? const Icon(Icons.check_rounded, color: Color(0xFF5B3FD4))
+                    : null,
+                onTap: () => Navigator.of(context).pop(lang),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// PANTALLA – Buscar Auriculares (Bluetooth)
+// ─────────────────────────────────────────────
+
+enum _SearchState { idle, searching, found }
+
+class FindEarbudsPage extends StatefulWidget {
+  const FindEarbudsPage({super.key});
+
+  @override
+  State<FindEarbudsPage> createState() => _FindEarbudsPageState();
+}
+
+class _FindEarbudsPageState extends State<FindEarbudsPage>
+    with SingleTickerProviderStateMixin {
+  _SearchState _state = _SearchState.idle;
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startSearch() async {
+    setState(() => _state = _SearchState.searching);
+    _pulseCtrl.repeat(reverse: true);
+
+    // Simula búsqueda Bluetooth durante 3 segundos
+    await Future<void>.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    _pulseCtrl.stop();
+    _pulseCtrl.value = 0;
+    setState(() => _state = _SearchState.found);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Top bar ──────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(Icons.arrow_back, size: 26, color: Colors.black87),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Buscar Auriculares',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 26),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Tarjeta principal ────────────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6F6F6),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // ── Círculo amarillo + auriculares ─
+                      ScaleTransition(
+                        scale: _pulseAnim,
+                        child: Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _state == _SearchState.found
+                                  ? const Color(0xFF2ECC71)
+                                  : _kAmber,
+                              width: 18,
+                            ),
+                            color: const Color(0xFFF6F6F6),
+                          ),
+                          child: Center(
+                            child: _state == _SearchState.found
+                                ? _FoundBadge()
+                                : _EarbudsIllustration(
+                                    spinning: _state == _SearchState.searching,
+                                  ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Nombre del dispositivo ─────────
+                      Text(
+                        _state == _SearchState.found
+                            ? '.Euronic-Ai  ✓'
+                            : '.Euronic-Ai',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: _state == _SearchState.found
+                              ? const Color(0xFF2ECC71)
+                              : Colors.black87,
+                        ),
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // ── Botón buscar ───────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _state == _SearchState.searching
+                              ? null
+                              : _state == _SearchState.found
+                                  ? () => setState(() => _state = _SearchState.idle)
+                                  : _startSearch,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _state == _SearchState.found
+                                ? const Color(0xFF2ECC71)
+                                : const Color(0xFF0E0E0E),
+                            disabledBackgroundColor: Colors.black38,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32)),
+                          ),
+                          child: _state == _SearchState.searching
+                              ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2.5, color: Colors.white),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Buscando...',
+                                        style: TextStyle(
+                                            fontSize: 17, fontWeight: FontWeight.w700)),
+                                  ],
+                                )
+                              : Text(
+                                  _state == _SearchState.found
+                                      ? 'Conectado'
+                                      : 'Buscar Auricular',
+                                  style: const TextStyle(
+                                      fontSize: 17, fontWeight: FontWeight.w700),
+                                ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ── Descripción ────────────────────
+                      Text(
+                        _state == _SearchState.found
+                            ? 'Auriculares Euronic-Ai encontrados y conectados correctamente.'
+                            : 'Los auriculares conectados van a emitir un sonido para poder encontrarlos con facilidad.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Bottom Nav ───────────────────────────
+            _DashBottomNav(
+              currentIndex: 2,
+              onTap: (i) {
+                if (i == 0) {
+                  Navigator.of(context).popUntil((r) => r.isFirst);
+                } else if (i == 1) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute<void>(builder: (_) => const AIChatPage()),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EarbudsIllustration extends StatefulWidget {
+  const _EarbudsIllustration({required this.spinning});
+  final bool spinning;
+
+  @override
+  State<_EarbudsIllustration> createState() => _EarbudsIllustrationState();
+}
+
+class _EarbudsIllustrationState extends State<_EarbudsIllustration>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_EarbudsIllustration old) {
+    super.didUpdateWidget(old);
+    if (widget.spinning && !old.spinning) {
+      _ctrl.repeat();
+    } else if (!widget.spinning && old.spinning) {
+      _ctrl.stop();
+      _ctrl.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: widget.spinning ? _ctrl : const AlwaysStoppedAnimation(0),
+      child: CustomPaint(
+        size: const Size(140, 140),
+        painter: _EarbudsPainter(),
+      ),
+    );
+  }
+}
+
+class _EarbudsPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // ── Earbud izquierdo ──────────────────────
+    _drawEarbud(canvas, Offset(w * 0.32, h * 0.44), mirrored: false);
+    // ── Earbud derecho ───────────────────────
+    _drawEarbud(canvas, Offset(w * 0.68, h * 0.44), mirrored: true);
+  }
+
+  void _drawEarbud(Canvas canvas, Offset center, {required bool mirrored}) {
+    final shadow = Paint()
+      ..color = Colors.black.withAlpha(30)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    final white = Paint()..color = const Color(0xFFF8F8F8);
+    final lightGray = Paint()..color = const Color(0xFFE8E8E8);
+    final darkGray = Paint()..color = const Color(0xFF888888);
+
+    final flip = mirrored ? -1.0 : 1.0;
+
+    // Sombra del pod
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: center.translate(2, 4), width: 44, height: 52),
+      shadow,
+    );
+
+    // Pod principal (blanco)
+    canvas.drawOval(
+      Rect.fromCenter(center: center, width: 44, height: 52),
+      white,
+    );
+
+    // Detalle interior oscuro
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: center.translate(0, -4), width: 22, height: 26),
+      lightGray,
+    );
+
+    // Malla del altavoz
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: center.translate(0, -4), width: 14, height: 16),
+      darkGray,
+    );
+
+    // Stem
+    final stemTop = center.translate(flip * 2, 22);
+    final stemRect = Rect.fromCenter(
+        center: stemTop.translate(0, 22), width: 14, height: 36);
+    final stemRRect =
+        RRect.fromRectAndRadius(stemRect, const Radius.circular(7));
+    canvas.drawRRect(stemRRect, white);
+
+    // Muesca en el stem
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: stemTop.translate(0, 32), width: 8, height: 8),
+        const Radius.circular(4),
+      ),
+      lightGray,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_EarbudsPainter old) => false;
+}
+
+class _FoundBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 90,
+      height: 90,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFF2ECC71),
+      ),
+      child: const Icon(Icons.check_rounded, color: Colors.white, size: 52),
     );
   }
 }
